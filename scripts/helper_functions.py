@@ -146,6 +146,9 @@ def label_encoder(dataframe, categorical_columns):
 
         if dataframe[col].nunique() == 2:
             dataframe[col] = labelencoder.fit_transform(dataframe[col])
+            print("Değişken : ", col)
+            print("0 encode edilen sınıf : ", labelencoder.inverse_transform([0]))
+            print("1 encode edilen sınıf : ", labelencoder.inverse_transform([1]), "\n")
 
     return dataframe
 
@@ -166,7 +169,7 @@ def one_hot_encoder(dataframe, categorical_columns, nan_as_category=False):
     original_columns = list(dataframe.columns)
 
     dataframe = pd.get_dummies(dataframe, columns=categorical_columns,
-                               dummy_na=nan_as_category, drop_first=False)
+                               dummy_na=nan_as_category, drop_first=True)
 
     new_columns = [col for col in dataframe.columns if col not in original_columns]
 
