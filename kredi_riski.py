@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import missingno as msno
 
 import scripts.helper_functions as hlp
+import scripts.models as models
 
 from sklearn.ensemble import RandomForestClassifier
 from lightgbm import LGBMClassifier
@@ -44,7 +45,7 @@ label_columns = ["Sex", "Risk"]
 hlp.label_encoder(df, label_columns)
 
 # Kategorik ve sayısal değişkenlerimizi belirliyoruz.
-categorical_columns = ["Sex", "Job", "Housing", "Saving accounts", "Checking account","Purpose"]
+categorical_columns = ["Sex", "Job", "Housing", "Saving accounts", "Checking account", "Purpose"]
 numeric_columns = ["Age", "Credit amount", "Duration"]
 
 # Kategorik değişken kırılımında hedef değişkenimizi inceliyoruz.
@@ -58,7 +59,6 @@ df.loc[df["Purpose"] == "domestic appliances", ["Purpose"]] = "furniture/equipme
 
 # Kategorik değişkenlerle işimiz bitti. Sayısal değişkenlerimize bakalım.
 hlp.has_outliers(df, numeric_columns)
-
 
 # Age değişkeninden, Age_Range kategorik değişkeni türetiliyor.
 bins = [18, 25, 40, 55, 100]
@@ -79,7 +79,6 @@ df.loc[(df["Duration"] > 72) & (df["Duration"] <= 84), "Year"] = "6-7 year"
 # Status değişkeni Credit amount değişkeninden türeyen, ekonomik sınıfı simgeleyen değişken.
 df["Status"] = pd.qcut(df["Credit amount"], 4, labels=["poor", "mid", "upper", "rich"])
 
-
 # Eksik değerler dolduruluyor.
 df["Saving accounts"] = df.groupby(["Sex", "Risk", "Age_Range"])["Saving accounts"].transform(
     lambda x: x.fillna(x.mode()[0]))
@@ -87,4 +86,27 @@ df["Saving accounts"] = df.groupby(["Sex", "Risk", "Age_Range"])["Saving account
 df["Checking account"] = df.groupby(["Sex", "Risk", "Age_Range"])["Checking account"].transform(
     lambda x: x.fillna(x.mode()[0]))
 
+# Kategorik değişkenlerimizi modele sokmak için one-hot yapmalıyız.
+one_hot_columns = ["Job", "Housing", "Saving accounts", "Checking account", "Purpose", "Age_Range", "Year", "Status"]
 
+df, one_hot_encodeds = hlp.one_hot_encoder(df, one_hot_columns)
+
+# Artık model kurma işlemine geçebiliriz.
+
+X = df.drop("Risk", axis=1)
+y = np.ravel(df[["Risk"]])
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=357)
+
+rf_tuned, lgbm_tuned, xgb_tuned = models.get_tuned_models(X_train, y_train, 357)
+
+# Modellerle tahmin yapıyoruz ve onuçları ekrana veriyoruz.
+models = [("RF", rf_tuned),
+          ("LGBM", lgbm_tuned),
+          ("XGB", xgb_tuned)]
+
+for name, model in models:
+    y_pred = model.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    msg = "%s: (%f)" % (name, acc)
+    print(msg)
