@@ -7,6 +7,31 @@ low_q1 = 0.05
 upper_q3 = 0.95
 
 
+def check_dataframe(dataframe):
+    """
+    -> Veriye genel bakış sağlar.
+
+    :param dataframe: Genel bakış yapılacak dataframe
+
+    """
+
+    print("Data Frame Raws Lenght : ", dataframe.shape[0],
+          "\nData Frame Columns Lenght : ", dataframe.shape[1])
+
+    print("\nData Frame Columns Names : \n", list(dataframe.columns))
+
+    print("\nIs data frame has null value? : \n", dataframe.isnull().any())
+
+    print("\nHow many missing values are in which columns? :\n", dataframe.isnull().sum())
+
+    cat_names = [col for col in dataframe.columns if dataframe[col].dtype == "O"]
+    num_names = [col for col in dataframe.columns if dataframe[col].dtype != "O"]
+
+    print("\nHow many columns are in the object type? : ", len(cat_names), "\n", cat_names)
+
+    print("\nHow many columns are in the numerical type? : ", len(num_names), "\n", num_names)
+
+
 def cat_summary(dataframe, categorical_columns, target, plot=False):
     """
     -> Kategorik değişkenlerin sınıflarının oranını ve targettaki medyanı gösterir.
